@@ -1,0 +1,130 @@
+---
+title: "Slack"
+format: html
+embed-resources: true
+execute:
+  message: false
+code-fold: true  
+---
+
+## Slack metrics
+
+```{r}
+#| include: false
+library(tidyverse)
+library(janitor)
+library(NHSRplotthedots)
+
+slack <- read_csv("20240426-slack.csv") |> 
+  janitor::clean_names()
+
+# Dates are character and have 4 digit years, replace with 2 digit years
+# Then convert to date format ymd before finding start of month
+
+slack_clean <- slack |> 
+  mutate(new_date = gsub( "([0-9]{2})([0-9]{2})$" , "\\2", date),
+         new_date = as.Date(new_date, format = "%d/%m/%y"),
+         month = lubridate::floor_date(new_date, "month"))
+
+```
+
+Data is extracted from Slack Workspace Analytics and exported from `r min(slack_clean$new_date)` to `r max(slack_clean$new_date)`
+
+## Active users
+
+Whilst there is no standard for measuring community engagement there are three often used:
+
+- Daily Active Users (DAU)
+- Weekly Active Users (WAU)
+- Monthly Active Users (MAU) 
+
+Slack doesn't provide Monthly Active Users.
+
+Slack defines an Active member as a person who has read or sent a message in at least one channel or a direct message in the workspace.
+
+```{r}
+ggplot(slack_clean, aes(x = new_date, y = daily_active_members)) +
+  geom_line() +
+  geom_smooth() +
+  labs(x = "date",
+       y = "percentage",
+       title = "Daily Active members") 
+```
+
+```{r}
+ggplot(slack_clean, aes(x = new_date, y = weekly_active_members)) +
+  geom_line() +
+  geom_smooth() +
+  labs(x = "date",
+       y = "percentage",
+       title = "Monthly Active members") 
+```
+
+## Last 6 months
+
+Looking at the chart over 6 months shows consistent dips in activity at the weekend, as well as key holiday periods like Christmas and Easter.
+
+```{r}
+last_6_months <- slack_clean |> 
+  filter(new_date >= lubridate::today() %m-% months(6)) |> 
+  mutate(day_names = lubridate::wday(new_date, label = TRUE),
+         is_weekend = ifelse(day_names %in% c("Sat", "Sun"), 0, 1))
+
+  ggplot(last_6_months, aes(x = new_date, y = daily_active_members)) +
+  geom_line() +
+  geom_smooth() +
+  labs(x = "date",
+       y = "percentage",
+       title = "Daily Active members") 
+```  
+
+Removing the weekends and then using {NHSRplotthedots} to create an SPC chart:
+
+```{r}  
+  last_6_months |> 
+  filter(is_weekend == 1) |> 
+  ptd_spc(value_field = daily_active_members,
+          date_field = new_date,
+          improvement_direction = "increase")
+```
+
+## Active posters and readers
+
+Built in Slack analytics show the active people in a workplace split by active members and active posting members.
+Active members can mean people in the workspace who read or have posted which is a useful measure as knowledge sharing is a key part of the community.
+
+```{r}
+#| label: active-readers
+
+posting_reading <- last_6_months |> 
+  mutate(per_posters_readers = daily_members_posting_messages/daily_active_members * 100)
+
+ggplot(posting_reading, aes(x = new_date, y = per_posters_readers)) +
+  geom_line() +
+  labs(x = "date",
+       y = "percentage",
+       title = "Percentage of daily members posting by daily active (posting and reading)") +
+  geom_smooth()
+
+```
+
+```{r}
+posting_reading |> 
+  select(new_date,
+         per_posters_readers) |> 
+  mutate(day_names = lubridate::wday(new_date, label = TRUE),
+         is_weekend = ifelse(day_names %in% c("Sat", "Sun"), 0, 1)) |> 
+  filter(is_weekend == 1) |> 
+  ptd_spc(value_field = per_posters_readers,
+          date_field = new_date,
+          improvement_direction = "increase")
+
+```
+
+## Insights
+
+A potential risk of concentrating on the high and low peaks of activity can be that they don't necessarily indicate healthy discussion or engagement.
+However, a couple of insights are useful for communication plans relating to sharing knowledge:
+
+- Interactions on Slack show a weekly pattern with weekends and public holidays seeing a drop in numbers.
+- Distinct numbers of people posting was particularly high during the conference period in November 2023 as people were directed to Slack specifically to ask questions.

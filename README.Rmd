@@ -1,0 +1,36 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# NHS-R Community metrics
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+As NHS-R Community does not have any formal membership, paid or otherwise, and 
+people are able to contribute as they are able, we want to track how many people
+are participating and actively engaging in NHS-R Community activities. 
+Content that is shared through YouTube, the website and Podcasts is extremely 
+popular but does not necessarily reflect the community which is people and their
+interactions.
+
+NHS-R Community primarily use a free Slack workspace to discuss and share, 
+through conversations. 
+Slack provides analytics through a [dashboard](https://slack.com/intl/en-gb/help/articles/218407447-View-your-Slack-analytics-dashboard) 
+and also provides a [download of data](https://slack.com/intl/en-gb/help/articles/360057638533-Understand-the-data-in-your-Slack-analytics-dashboard).
+It's from this data download that we are able to build a 
+[Daily Active Users/Monthly Active Users](https://www.jonobacon.com/2019/04/01/measure-community-growth-forums/) graph.
+
+> The formula here is simple: the graph presents a percentage score calculated 
+by the number of members that logged in in the last day divided by the number of 
+members that logged in in the last month. It gives us a good sense of overall 
+engagement and as a general rule, you want to shoot for over 30% stickiness.
